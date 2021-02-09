@@ -1,0 +1,81 @@
+Cassandra
+feature:
+(1) geographically distributed(abstract)
+(2) treat failure as norm rather than exception(1)
+	metadata stored at Zookeeper for crashes and come back(5.2)
+	node outage usually transient, rarily signifies a permanent departure(5.4)
+(3) support continuously growth of platform(1) 
+	high scalability
+(4) handle write throughput while ensure read efficiency(abstract)
+
+data model(3):
+(1) simple column family & super column family [wiki page]
+(2) op under a single row key is atomic per replica, no matter how many
+columns are being read or written into
+
+architecture:
+paritioning(5.1)
+consistent hashing
+	departure or arrival of a node only affects its immediate neighbour, other
+	nodes remain unaffected
+
+replication(5.2)
+	rack unaware: pick N-1 successors of the coordinators in the ring
+	rack aware/data-center aware: leader/follower
+
+failure detection(5.3)
+accural failure detection
+1/ failure detection should be flexible, which is achieved by decoupling it from the application being monitored
+2/ different from normal heartbeat, use suspicion level between live and dead
+
+bootstrapping(5.4)
+initially randomly chooses a token for position within ring
+mapping stored locally and in Zookeeper
+every node is able to route request for a key to the corresponding node
+
+local storage(5.6)
+(1) leverage local file system
+	a in-mem data structure and a file for every column family(5.7)
+(2) dedicated disk for logging
+(3) LSMT
+1/ leveled compaction(memtable, SSTable)
+2/ bloom filter: whether need to check current file
+3/ column indices: jump to the right chunk on disk for column retrival
+4/ SSTable: data, index, filter
+	index: All writes are sequential to disk and also generate an index for 
+	efficient lookup based on row key.
+
+implementation:
+(1) modules: partitioning, cluster membership, failure detection, storage engine
+	module is handled in SEDA architecture
+(2) system control message in UDP, application related message in TCP
+(3) request handle stages
+(4) rolling commit log for purging logs
+	bit vector to indicate whether data has been committed
+(5) support fast-sync(buffer log and data committing)
+(6) immutable => no lock needed
+
+Cassandra: the definite guide
+(1) gossip for failure detection
+Here is how the gossiper works: => TCP 3-way handshake
+1. Periodically (according to the settings in its TimerTask), the G=gossiper will choose
+a random node in the ring and initialize a gossip session with it. Each round of
+gossip requires three messages.
+2. The gossip initiator sends its chosen friend a GossipDigestSynMessage.
+3. When the friend receives this message, it returns a GossipDigestAckMessage.
+4. When the initiator receives the ack message from the friend, it sends the friend a
+GossipDigestAck2Message to complete the round of gossip.
+
+(2) data exchanging
+1/ During a major compaction, the server initiates a TreeRequest/
+TreeReponse conversation to exchange Merkle trees with neighboring nodes. The
+Merkle tree is a hash representing the data in that column family. After each update, anti-entropy algorithm performs a checksum
+against the database and compares checksums of peers; if the checksums differ, then
+the data is exchanged.
+2/ read repair: The read operation blocks until the client-specified consistency 
+level is met. If it is detected that some of the nodes responded with an 
+out-of-date value, Cassandra will return the most recent value to the client. After 
+returning, Cassandra will perform what’s called a read repair in the background. 
+This operation brings the replicas with stale values up to date.
+
+(3) tombstone

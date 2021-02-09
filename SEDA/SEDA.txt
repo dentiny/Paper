@@ -1,0 +1,68 @@
+motivation(3.1):
+(1) support massive concurrency
+(2) simplify the construction of well-conditioned services
+(3) enable introspection
+(4) support self-tuning resource management
+
+architecture before SEDA:
+(1) per-thread
+con: 1/ over-subscription, cache and TLB miss, context switch, lock contention
+	 2/ application rarely can participate system-wide resouce management
+
+(2) bounded thread-pool
+con: 1/ unfair, following threads have to wait if all running threads are busy 
+	or are blocked
+	 2/ since a request is handled by one single thread, hard to analyze 
+	 bottleneck
+
+summary:
+staged architecture is easy to inspect internal runtime and analyze bottleneck,
+which allows load shedding when demands exceeds capacity
+
+(3) Event-Driven Architecture:
+1. Every component loops continually, responds to particular types of requests
+2. Scheduler dispatches events to corresponding components.
+con: 1/ assume event handling doesn't block
+	 2/ challenge: scheduling and ordering of events
+	 3/ poor modularity
+
+modular atomic objects:
+(1) a set of methods that defines how threads call/invoke them
+(2) private state: data accessed only by methods, shared by threads inside
+(3) atomic: hide internal concurrency
+(4) no lock across API
+(5) threads invoke API: concurrency inside, doesn't care where threads come from
+
+=> private internal states, no synchronization needed outside, care little about
+	where threads come from
+
+asynchronous API:
+(1) call method
+(2) method returns immediately
+(3) caller receives completion event eg, notification upcall
+Example:
+1/ Language specification: Future/Promise in C++/Python/Java/Scala
+2/ OS primitives: BSD kqueue, Linux epoll
+
+stage:
+(1) event handler: user-provided handler
+(2) incoming event queue
+	1/ enqueue may fail because the queue has reached its threshold
+	2/ solutions:	
+		backpressure: block on a full queue
+		load shedding: drop events 
+		others: send errors to users, provide degraded services
+(3) thread-pool
+(4) dynamic resource controller
+	observe runtime characteristics of the stage
+	adjust allocation and scheduling parameters
+two common controller: thread-pool controller, batching controller
+
+SEDA application pipeline:
+(1) constructed as a network of stages, connected by queues
+(2) introducing queue provides isolation, modularity, independent load management, 
+	but increace latency
+(3) facilitate debugging and performance analysis
+
+future work:
+(1) a generalized flow-control scheme for communication between stages

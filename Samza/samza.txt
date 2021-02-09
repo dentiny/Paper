@@ -1,0 +1,53 @@
+concept:
+1. stream(3.2.1): (1) partitioned, ordered, replayable collections of immutable messages
+(2) each message in a stream is modelled as a kv-pair
+2. state(2.1): any persistent data structure defined by app or used internally in the system
+
+motivation(1):
+(1) large-scale stateful stream processing with low latency and high throughput
+(2) recoverability, meanwhile ensure low recovery time
+(3) doesn't necessarily rely on remote storage
+(4) do not perform full application state snapshot
+
+technical point:
+(1) stream processing pipeline(3.1)
+	service tier
+		generate event and persistent storage updates
+	ingestion tier
+		act as a buffer layer, mitigate the speed of upstream and downstream processing speed difference(3.2.2)
+	processing tier
+		uniformly take events and updates as stream
+		either stateful or stateless
+		API(http://samza.apache.org/learn/documentation/latest/core-concepts/core-concepts.html)
+	serving tier
+		could be persistent storage or stream processing component
+
+(2) container is minimum physical unit
+	task is minimum logical unit
+
+(3) related components
+	resource allocation: Samza-wise(3.2.2)
+		resource allocation(eg, container)
+		failure detection and recovery
+	coordinator: job-wise(3.2.2)
+		job configuration: container #, input sources
+		placements: map container to machine, task to container, input partition to task
+		latest update offset
+
+(4) state storage
+ 	3-layer caching, avoid deserialization overhead(4.1.1)
+ 	local storage(RocksDB), also supports remote storage with async API(4.1.1)
+ 	changelog stored at Kafka(4.1.2)
+ 		only sent out of hot computation path
+ 		compaction and batching performed at sending
+ 		log compaction performed at Kafka side
+ 	latest offset stored at Coordinator(4.1.3)
+ 		for Host Affinity, only logs after should be replayed
+ 		otherwise, have to replay all compacted logs
+
+(5) Lambda
+	easy to reprocess(fork and batching nature)
+	handle late or out-of-order events(Kafka)
+
+Q: Why states?
+Q: How to reprocess simutaneously with real-time processing?

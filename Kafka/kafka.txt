@@ -1,0 +1,44 @@
+1. motivation
+(1) large scope of logging: real data, user activity, metrics, etc
+(2) offline with online
+offline: scrap log files off production server, collect data into specialized storage, real-time application
+online: 
+(3) large amount of data
+
+2. terminology
+(1) topic
+(2) producer/broker/consumer
+(3) committed
+(4) in-sync
+
+3. distributed broker
+(1) controller: responsible only for partition leader
+ - ZK
+ - GFS: control plane/data plane
+(2) topics are divided into partitions, with one leader per partition
+(3) only partition leaders handle requests from producer/consumer/followers
+(4) index map
+ - (topic, partition, offset) -> (segment, offset)
+
+4. distributed consumer
+(1) consumer group
+
+5. storage
+(1) segment: unit of storage
+(2) When to reply back client? ack
+(3) How to ensure reliability?
+ - broker: unclean election, min in-sync replica
+(4) consumer/producer: ack, retry
+
+6. reliability
+(1) partition replication(not for performance)
+(2) ack(sync/async, how many replicas, min in-sync replica), retry
+(3) rack-level(partition), cluster-level(mirroring)
+
+6. performance
+(1) partition
+(2) sequential rw
+(3) avoid double caching, zero-copy(3.1)
+(4) efficiency: log deletion, log compaction
+
+reference: https://book.huihoo.com/pdf/confluent-kafka-definitive-guide-complete.pdf

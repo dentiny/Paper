@@ -1,0 +1,65 @@
+MapReduce(MR lecture notes):
+one master, that hands out tasks to workers and remembers progress.
+1. master gives Map tasks to workers until all Maps complete
+ Maps write output (intermediate data) to local disk
+ Maps split output, by hash, into one file per Reduce task
+2. after all Maps have finished, master hands out Reduce tasks
+ each Reduce fetches its intermediate output from (all) Map workers
+ each Reduce task writes a separate output file on GFS
+
+limitation/feature:
+(1) barrier between Map and Reduce => not lazy evaluation 
+(2) Map worker periodically flush buffer into local disk, message master
+on location(3.1) => IO(write) overhead
+(3) fault tolerance: re-execution(3.3)
+(4) locality: network communication dominates(3.4, notes)
+(5) no multi-stage pipelines(MR notes)
+(6) no in-mem reuse => no iteration and interaction(MR notes)
+
+Q: Why bother writing to local disk?
+A: (1) no large memory
+   (2) explicit barrier(Map worker perform Map on different partition one after 
+   another before all Map completes)
+   (3) network overhead dominates
+
+working set: dataset reused across parallel operations(PPT P3)
+
+RDD:
+(1) immutable, partitioned collections of records(2.1)
+(2) default recomputed everytime, but programmers could control its 
+partitioning and persistence(2.1)
+eg: cache/persist as a hint to store in mem, save to persistent
+(3) lazy by default(2.1)
+	Spark computes them only in a lazy fashion—that is, the first time they are used in an action(Learning Spark 2.1)
+(4) resilient, could be reconstructed via lineage
+(5) type-safe
+
+From Learning Spark:
+Rather than thinking of an RDD as containing specific data, it is best to think of 
+each RDD as consisting of instructions on how to compute the data that we build up
+through transformations.
+
+driver program:(Spark lecture notes)
+the Scala code runs in the "driver" machine of Figure 2
+  the driver constructs a lineage graph
+  the driver compiles Java bytecodes and sends them to worker machines
+  the driver then manages execution and data movement
+
+two types of operation:
+transformation: create a new RDD
+action: operation that returns value to driver or loads to persistent storage
+
+shared variables:
+(1) broadcast variables
+(2) accumulators
+
+fault tolerance:
+re-execution(lineage)
+	RDD: Each dataset object contains a pointer to its parent and information about how the parent was transformed
+	optimization: checkpoint(RDD paper 5.4)
+
+ comparison with DSM(RDD 2.3):
+ (1) straggler
+ (2) schedule based on data locality
+
+presentation: https://www.usenix.org/conference/hotcloud-10/spark-cluster-computing-working-sets
