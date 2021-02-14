@@ -1,0 +1,93 @@
+feature:
+(1) meet different demands: from data size to latency requirements
+	range from throughput-oriented batch processing to latency-sensitive serving of data
+(2) simple data model which supports dynamic control over data layout and format
+(3) treat data as uninterpretted strings
+(4) allow clients control whether to serve data from memory or disk
+
+1/ disitributed indexing system based on GFS(GFS acts as the disk of BigTable)
+2/ provides strong consistency by ensuring each tablet is handled by one tablet server
+	at the same time
+3/ tablet server failover could cause service suspension in short period, not for 
+	real-time transaction system, for offline services or semi-online services
+
+data model:
+(1) operation under row-key is atomic
+(2) tablet ordered by row-key
+(3) store reversed URL: store pages from the same domain near each other(locality)
+drive.google.com      com.google.drive
+en.wikipedia.org  =>  com.google.maps
+maps.google.com       org.wikipedia.en
+(4) (row, col) -> cell
+	(row, col, timestamp) -> value
+(5) values in the cell stored decreasing order by timestamp => get the latest value
+(6) garbage-collect outdated data(evict policy)
+(7) column family is the unit of memory and disk accounting
+	eg: for join operation, doesn't have to copy data that's not needed for query
+
+tablet management:
+(1) master assigns tablets to tablet servers
+(2) tablet servers manages reads and writes from its tablets
+(3) clients communicate directly with tablet servers
+(4) tablet server splits tablets that grow too large
+
+tablet assignment:
+(1) Chubby ensures each tablet is assigned to one tablet server
+(2) master knows assignment of tablet
+	1/ tablet assignment: create or delete a tablet, merge or split a tablet
+		all of the above except the last is initiated by master
+		tablet server commit split then notify master
+	2/ periodically ask the status of exclusive lock	
+		When lock reported lost, or receive no response, either Chubby or tablet server
+		goes wrong
+		master tries to acquire the lock, if fails, Chubby goes down, service suspension
+		if succeeds, tablet server fails, master re-assign tablet to other tablet servers
+
+refinement:
+(1) locality group:
+	1/ group multiple column families into a locality group
+	2/ SSTable is for each locality group in each tablet
+	3/ the unit of compression
+(2) tablet client caching:
+	1/ caches tablet location
+	2/ cache not exist or outdated, move to upper hierarchy
+(3) tablet server caching:
+	1/ temporal locality: ScanCache: high-level cache for kv-pair repeated fetching
+	2/ spatial locality: BlockCache: low-level cache for SSTable blocks for GFS
+(4) tablet server as the unit of commit log, not tablet
+	1/ use tablet disadvantage: numbers of files, eliminate group commit optimization
+	2/ use tabler server disadvantages: complicate recovery, duplicate log read
+		solution: sort commit log in order of <table, row, seq #>
+(5) logging straggler: two logging threads with corresponding logging file
+	(MR straggler hanlding: issue another subtask)
+(6) load balancing(move tablet from one tabler server to another):
+	1/ dump memtable into SSTable
+	2/ keep service write op suspension short
+	first minor compaction allows simutaneous write op
+	second minor compaction suspends write op
+(7) immutability:
+	1/ SSTable naturally enables concurrent access
+	2/ memtable allows concurrent updates via COW
+
+building block:
+(1) GFS: build on GFS(GFS acts as the disk of BigTable), store log and data file
+(2) Borg(cluster management system): job scheduling, resource management, machine failure
+	handling, machine status monitor
+(3) Chubby(distributed lock service): 
+	1/ store the bootstrap location of BigTable data
+	2/ discover tablet data and finalize tablet server death
+	3/ store BigTable schema information
+	4/ each directory/file could be used as a lock, rw to a file is atomic
+	5/ provide consistent caching of Chubby files at client side
+
+component:
+(1) master: 
+	1/ assign tablet to tablet servers
+	2/ detect addition/expiration of tablet servers
+	3/ tablet server load balancing
+	4/ garbage collect GFS files
+	5/ handle schema changes
+	note: communication little with clients, acceptable workload
+(2) tablet server:
+	1/ handle rw to tablet
+	2/ split tablet when too large(only tablet change issue not by master)
