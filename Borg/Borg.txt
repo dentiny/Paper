@@ -1,0 +1,103 @@
+motivation:
+(1) different machines need to run different kinds of applications with different 
+workload, need a cluster management system which admits, schedules, restarts and 
+monitors full range of applications
+(2) hide the details of resource management and failure handling
+	determine where in a cell to run tasks, allocate resources, install program and
+	dependencies, monitor health and restart after failure(2.2)
+(3) from users' perspective
+	1/ submit, update and kill a job
+		use job specification language to submit and update
+	2/ Sigma provides web-based UI to inspect state of all jobs, a particular cell,
+	resource usage, execution history, etc(2.2)
+
+job specification language:
+job hello_world = {
+ runtime = { cell = 'ic' } // Cell (cluster) to run in
+ binary = '.../hello_world_webserver' // Program to run
+ args = { port = '%port%' } // Command line parameters
+ requirements = { // Resource requirements (optional)
+ ram = 100M
+ disk = 100M
+ cpu = 0.1
+ }
+ replicas = 5 // Number of tasks
+}
+other constaints could include(2.3):
+(1) processor architecture, OS version, etc
+(2) could be hard requirement, or soft preferrence as scheduling indication
+
+keywords in abstract:
+(1) admission control
+(2) efficient task-packing
+(3) over-commitment
+(4) machine sharing with process-level performance isolation
+(5) runtime features which minimize fault-recovery time
+(6) scheduling policy which reduces the probability of correlated failures
+(7) job-related operation and monitoring from users' perspective
+
+terminology:
+(1) job(2.1. 2.3): 
+	1/ the only grouping mechanism, unit of user's operation
+	2/ contains one or more tasks
+		most task properties are the same but could be overriden(2.3)
+	3/ a job runs in a Borg cell(cluster)
+	4/ long-running task which handles latency-sensitive requests(prod, take most
+		resources); batch jobs, latency-insentive(non-prod)
+	5/ update
+		executed in a rolling fashion
+		set upper bound for disruption
+		two step disruption: SIGTERM then SIGKILL
+
+(2) alloc(resource envelope)(2.4):
+	1/ reserved set of resources on a machine for one or more tasks
+	2/ tasks could go beyond compressible resources and use slack resources(6.2),
+		but may keep alloc whether they're used or not
+	3/ alloc set: a group of allocs, manage the resource management for jobs
+
+(3) priority(2.5):
+	1/ indication for preemption, rule to avoid cascade preemption 
+	2/ quota: a vector of quantities(CPU, RAM, disk, etc) at a given priority, used
+		for admission, not for scheduling
+	3/ oversell infinite quota of priority zero, could be pending even if admitted
+		(constrast with high-priority jobs)
+
+(4) monitor(2.6):
+	1/ every task contains built-in HTTP server to maintain health and performance
+	 matrics of tasks
+	2/ Sigma(web-based UI)
+	3/ record job submission and task events, per-task resource usage information
+	in Infrastore: usage-based charging, debugging, wordload trace
+
+architecture:
+(1) BorgMaster(3.1):
+	1/ elected leader acts as leader for Paxos-based storage, also state mutator
+	2/ checkpoint(snapshot and changelog), used for restore state in the past, offline
+	simulation, etc
+	3/ actively asks Borglet about machine state: control over communication rate,
+	avoid the need for flow control, prevent recovery storms, and acts as heartbeat
+
+(2) Borglet(3.3):
+	1/ manage local tasks(start, stop, restart)
+	2/ report machine state to BorgMaster and other monitoring systems
+	3/ report full state, but link shard aggregate and compress information by reporting
+	only difference
+
+(2) scheduling(3.2, 3.4):
+	1/ apply feasibility checking on randomly selected machines(relaxed randomization)
+	until enough machine candidates
+	2/ perform scoring based on user-specified preferrence, but mostly on built-in
+	criteria: minimize distrupted tasks, already-installed dependencies, distribute
+	failure domain(4)
+	3/ scoring caching: avoid re-computation until job/machine changes; meanwhile ignore
+	small changes
+	4/ take equivalence class, rather than task, as the unit of feasibility checking
+	5/ run as a seperate process
+
+engineering detail:
+(1) program statically linked to reduce dependency on runtime environment, or 
+structured as binaries and data files(2.3)
+(2) link shard to avoid full state reporting every single communication(3.3)
+(3) BorgMaster actively query Borglet rather than passively receive heartbeat(3.3)
+(4) management group: alloc set(2.4), equivalence class(3.4)
+(5) two step disruption: SIGTERM then SIGKILL(2.3)
