@@ -1,0 +1,117 @@
+How data is stored:
+(1) large files are stored at Haystack, including attachments
+(2) small and medium files are stored at HDFS, including message metadata and 
+body, search index
+conclusion: handle normal and worst case seperatedly(2.2)
+
+layered storage:
+advantages: (1) simplicity, less development cost, fewer bugs
+(2) code sharing between systems, eg: MapReduce/HBase rely on HDFS
+questions: (1) performance?
+(2) layer integration useful?(6.1)
+(3) Should there be multiple HW layer? single flat layer/tiered layer
+
+HBase/HDFS IO workload:
+(1) baseline IO: flushing, foreground read always needed
+(2) HBase overhead: 
+	logging: useful for crash recovery, but not operation
+	compaction: improves read performance, but not required for correctness
+
+methodology:
+(1) HTFS(Hadoop Trace FS): HBase/HDFS with tracing utils
+(2) shadow testing: 
+	real workload without imposing overhead on real users
+		9 shadows machines, with requests from production mirrored
+(3) collect requests results: rw, offset, length, but not content
+	access pattern metrics:
+	1/ random/sequential IO(%)
+	2/ read/write(%)
+	3/ IO size
+	4/ IOPS
+	5/ queue length: # of outstanding IO at a time, indication of IO 
+	parallelism
+(4) evaluate changes to storage stack via simulation bases on two models, used 
+	for later what-ifs
+	1/ a model which determines how HDFS IO translates to local IO
+	2/ a model of local storage
+
+Q & A:
+Q: What are the major causes of I/O at each layer of the stack (§4.1)?
+A: FM is very read-heavy, but logging, compaction, replication, and caching 
+amplify write I/O, causing writes to dominate disk I/O. We also observe that
+while the HDFS dataset accessed by core I/O is relatively small, on disk the 
+dataset is very large (120TB) and very cold (two thirds is never touched).
+Thus, architectures to support this workload should consider its hot/cold 
+nature.
+
+Q: How much I/O and space is required by different types of data (§4.2)?
+A: FM uses significant space to store messages and does a significant amount 
+of I/O on these messages; however, both space and I/O are dominated by
+helper data (i.e., metadata, indexes, and logs). Relatively little data is 
+both written and read during tracing; this suggests caching writes is of little
+value.
+=> metadata overhead
+	GFS: designed for large sequential IO, and not optimized for small IO
+	messages: random and small IO dominates(abstract)
+
+Q: How large are files, and does file size predict file lifetime (§4.3)?
+A: Traditional HDFS workloads operate on very large files. While most FM data 
+lives in large, longlived files, most files are small and short-lived. This has
+metadata-management implications; HDFS manages all file metadata with a single 
+NameNode because the data-to-metadata ratio is assumed to be high. For FM, this
+assumption does not hold; perhaps distributing HDFS metadata management should 
+be reconsidered.
+
+Q: And do requests exhibit patterns such as locality or sequentiality (§4.4)?
+A: At the HDFS level, FM exhibits relatively little sequentiality, suggesting 
+high-bandwidth, high-latency storage mediums (e.g., disk) are not ideal for
+serving reads. The workload also shows very little spatial locality, suggesting
+additional prefetching would not help, possibly because FM already chooses for
+itself what data to prefetch. However, despite application-level and
+HBase-level caching, some of the HDFS data is particularly hot; thus, 
+additional caching could help.
+
+Q: how much can we improve performance without flash, by spending more on RAM 
+or disks (§5.1)?
+A: The FM workload exhibits relatively little sequentiality or parallelism, so 
+adding more disks or higher-bandwidth disks is of limited utility. Fortunately,
+the same data is often repeatedly read (§4.4), so a very large cache (i.e., a 
+few hundred GBs in size) can service nearly 80% of the reads. The usefulness of
+a very large cache suggests that storing at least some of the hot data in flash
+may be most cost effective. We evaluate the cost/performance tradeoff between 
+pure-RAM and hybrid caches in a later section (§5.4).
+
+Q: What policies utilize a tiered RAM/flash cache best (§5.2)?
+A: Adding flash to RAM can greatly improve the caching hit rate; furthermore (
+due to persistence) a hybrid flash/RAM cache can eliminate half of
+the extra disk reads that usually occur after a crash. However, using flash 
+raises concerns about wear. Shuffling data between flash and RAM to keep the
+hottest data in RAM improves performance but can easily decrease SSD lifetime 
+by a factor of 2x relative to a wear-aware policy. Fortunately, larger SSDs 
+tend to have long lifetimes for FM, so wear may be a small concern (e.g.,
+120GB+ SSDs last over 5 years regardless of policy).
+
+Q: Is flash better used as a cache to absorb reads or as a buffer to absorb
+writes (§5.3)?
+A: Using flash to buffer all writes results in much worse performance than 
+using flash only as a cache. If flash is used for both caching and buffering, 
+and if policies are tuned to only buffer files of the right size, then 
+performance can be slightly improved. We conclude that these small gains are 
+probably not worth the added complexity, so flash should be for caching only.
+
+Q: Is the cost of a flash tier justifiable (§5.4)?
+A: Not only does adding a flash tier to the FM stack greatly improve 
+performance, but it is the most cost-effective way of improving performance. 
+In some cases, adding a small SSD can triple performance while only increasing 
+monetary costs by 5%.
+
+workload analysis conclusions:
+(1) layers amplify writes: 1% -> 64%
+(2) data is read or written, but rarely both
+(3) dataset is large and cold: 2/3 of 120TB is never touched
+(4) files are small: 90% smaller than 6.3MB
+(5) high temporal locality: most reads are repeats
+(6) reads are over 75% random
+(7) low spatial locality: reads are not often to nearby offsets
+
+conference presentation: https://www.usenix.org/conference/fast14/technical-sessions/presentation/harter
