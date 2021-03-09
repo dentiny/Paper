@@ -1,0 +1,36 @@
+Similar to GFS/BigTable:
+Partition layer -> BigTable
+	PartitionManager -> Master
+	PartitionServer -> TabletServer
+	RangePartition -> Tablet
+	ParitionMapTable -> metadata table
+Stream layer -> GFS
+	block -> record
+	extent -> chunk
+
+layer:
+(1) stream layer: distributed file system, intra-stamp replication(sync)
+(2) partition layer:
+	1/ high-level data abstration: blob, table, queue
+	2/ transaction ordering and strong consistency for objects
+	3/ cache
+	4/ inter-stamp replication(async)
+(3) front-end layer: authenticate, route requests to partition layer
+
+data organization at stream layer:
+(1) block: unit of read/write
+(2) extent: unit of replication
+(3) stream: unit of file in partition layer
+
+difference with GFS/BigTable:
+(1) GFS ensures primary with leases; primary in WAS is fixed
+(2) BigTable use TabletServer as unit of logging; WAS use RangePartition
+(3) WAS stream layer makes sure extents(primary/replica) exactly the same
+
+optimizations:
+(1) OS IO scheduler prefers sequential IO, meanwhile could induce untimely
+handling on random ones; use self-implemented scheduler
+(2) write logs to dedicated disk
+(3) for writes, either log succeeds or data succeeds ack
+(4) improve space efficiency via erasure coding(extent appendable and immutable)
+(5) for Blob, only record index on commit log stream rather than raw string
