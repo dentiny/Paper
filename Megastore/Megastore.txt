@@ -1,0 +1,34 @@
+motivation:
+(1) build on BigTable/GFS, provide RDMS functionality
+	- data model
+	- SQL-like language
+	- transaction
+(2) partition store and replicate each partition seperately
+	- provide ACID semantics within partitions
+	- limited consistency across partitions
+
+entity group:
+(1) unit of partition and replication
+(2) realize transaction within entity group via redo/undo log
+(3) achieve eventual consistency via distributed queue across entity groups
+
+adaptations on Paxos:
+(1) coordinator(server in replicas' datacenter) records whether local entity
+groups is most-updated
+If so, perform local read, to avoid inter-datacenter traffic
+If BigTable write fails, considered commited after invalidating corresponding 
+entity group
+note: local: intra-datacenter
+(2) replica:
+	1/ full replica
+	2/ witness replica: only logs, participate Paxos voting, and used when 
+	there's no enough server as quorum
+	3/ read-only replica: full snapshot of data, suits for reads which could
+	tolerate stale data
+(3) fast write: successful write message contains prepare message; roll back
+to two-phase Paxos when fails
+why it works: in most cases master/slave identity is relatively fixed
+note: two-phase Paxos: prepare phase/accept phase
+(4) how to select leader: where most applications submit writes from the same
+region repeated
+(5) read: current, snapshot, inconsistent
