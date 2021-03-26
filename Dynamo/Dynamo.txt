@@ -1,0 +1,63 @@
+motivation(3.3):
+1. always writable: no writes rejected due to failures or concurrent writes
+2. single administrative domain: all nodes are trusted
+3. no hierarchical namespaces
+4. latency sensitive: 99.99% rw completes within 300ms
+
+technical point:
+1. partitioning: consistent hashing
+To resolve ununiform data and load distribution, take vnode
+	a physical node is assigned several vnode within hash ring
+pro:
+(1) When a node gets online or offline, workload is dispersed evenly
+(2) # of nodes depends on machine capacity
+Note: "token" means position assigned in hash ring
+
+2. replication:
+preference list: record which nodes are responsible for a particular key
+Every node can determine which node should be in the list for the key
+
+3. object versioning: vector clock with reconciliation during reads
+Lamport clock:
+(1) ensure when event A happens before event B, C(A) < C(B)
+(2) only works when they are in the same server, or are sender/receiver
+
+implementation:
+(1) initial Lamport timestamp is 0
+(2) if an event happens within a node, increment node timestamp of 1
+(3) for a sender event, increment node timestamp of 1, and send the timestamp
+(4) for a receiver event, update the node timestamp = max(received, local) + 1
+
+4. handle temporary failure:
+A node outage rarely signifies a permanent departure and therefore should not
+result in rebalancing of the partition assignment or repair of unreachable 
+replicas.(4.8.1)
+(1) When a server fails, write to another server
+(2) When it comes back, get back data in the background task
+
+5. handle inconsistency:
+To detect inconsistency between replicas faster and minimize the amount of 
+transfer, use Merkle Tree
+
+6. give services control over system properties(like durability, consistency),
+it could achived via setting R/W/N(R + W > N) (3.3)
+main patterns: business logic specific reconciliation(dev-defined), timestamp 
+based reconciliation(latter-write wins), high performance read engine(R = 1) (6)
+
+7. zero-hop DHT(Distributed Hash Table): each node maintains enough routing 
+information locally to route requests directly(without participation of 
+coordinator) (3.3)
+
+two strategies a client could use to select a node:(4.5)
+(1) route its requests through a generic load balancer, which selects a node
+based on load information
+(2) use a partition-aware client library which routes requests directly to the
+appropriate node
+
+8. Evaluate SLA(Service Level Agreements) by percentile, other than average or 
+median(2.2)
+
+9. read repair:
+(1) for read request, get R replicas
+(2) if inconsistency detected, apply self-defined policy to reconcile
+(3) sync up outdated replicas
