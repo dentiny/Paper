@@ -1,0 +1,24 @@
+Borg/Omega are intended for better resource utilization on clusters, supports
+diverse workload of various duration and response time demands.
+detailed feature and implementation of scheduler could reference to Borg paper
+Omega paper provides high-level scheduling policy
+
+comparison on several scheduling policies:
+1. monolithic scheduler: take the same scheduling algorithm on all jobs
+(1) hard to diversify
+(2) code growth, because the algorithm should consider all sorts of jobs
+(3) scalability, since there's only one scheduler
+2. static partitioning: allocate fixed resource to every job
+(1) inflexible
+(2) poor resource utilization
+3. two-level: dynamically allocate resource to jobs by central scheduler
+(1) hoarding: even if there's resource, central scheduler could hide it
+(2) hide overall state of the cluster
+4. shared-state two-level:
+(1) every scheduler maintains a private global resource copy
+(2) allocate resource by local scheduler
+(3) central coordinator detect allocation conflict; failed scheduler would 
+update local state copy and re-schedule(OCC)
+
+takeaway:
+most jobs are batches, but most resources are consumed by service jobs
