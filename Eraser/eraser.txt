@@ -1,0 +1,42 @@
+Q: Why not use a single lock in multi-thread applications?
+A: The performance will be bad because more threads will be blocked when one 
+thread holds the lock
+
+Q: For the race example in Fig2, a race detector based on happens-before logic 
+can detect it.
+A: Depends on scheduler
+
+Q: For the race example in Fig2, a race detector based on lockset algorithm can 
+detect it.
+A: True
+
+Q1: What prevents a process from reading kernel memory?
+The protection mechanism of virtual memory. There's a premission bit of U/S on 
+page table, and OS checks permission of the program which try to access the 
+location of the memory. If the code tries to access an address which is not 
+allowed to access under the current permission, an exception will be triggered.
+
+Why is it broken?
+Microarchitecture does performance optimization and will execute instructions 
+out-of-order. When an instruction is fetched and executed out-of-order, it's 
+permission won't be checked. After instructions have been executed and a fault 
+is detected, the architecture will rollback data in mem and reg, but not in 
+cache. So it's possible to get data inside of kernel from cache.
+
+Q2: The key building blocks of Meltdown are (1) executing transient 
+instructions and (2) building a covert channel. Explain what they mean in the 
+context of Meltdown and why each of them is important.
+
+(1) Transient instructions means an instruction should never be executed, for 
+this situation, it's the instruction which visits data in kernel space in user 
+mode. But in fact, it actually is prefetched and executed in a fashion of 
+out-of-order before its permission bit is checked. After the permission check 
+fails, data generated in mem and reg will be rollbacked, but those in cache 
+won't be recovered.
+
+(2) building a covert channel
+It means using a flush and reload to launch cache attack. Since the data from 
+kernel space is left in cache, we could use build a covert channel to get that 
+data, with detecting the access time of a bunch of addresses. In a word, this 
+is the way where the malicious program finds the value of what was loaded in 
+the cache, namely we could get kernel data.

@@ -1,0 +1,33 @@
+Q: Why the authors need to use tmpfs (in-memory) file system instead a 
+traditional disk filesystem for benchmarking Linux performance?
+A: Disk I/O can be a major bottleneck that can mask OS performance
+
+Q: Which of the following is not the reason that gmake’s performance is very 
+scalable on Linux?
+A: Gmake is slow, so making its performance scalable is easier.
+
+Q1: What problem does sloppy counter solve? 
+Counters are used for reference-counted garbage collection and to manage 
+various resources.
+Since these counters are shared by all cores, updates by many cores could be a 
+bottleneck for the system.
+Sloppy counter is introduced to cache cross-core counter into per-core, thus 
+improve the scalability of the kernel.
+
+What’s the drawback?
+(1) More space consumption. For per-core counter, they use space proportional 
+to the number of cores.
+(2) It is occasionally necessary to reconcile the central and per-core 
+counters, for example, when a counter comes to 0, the kernel needs to check 
+whether it should be deallocated. This operation is expensive, so sloppy 
+counters should only be used for objects that are relatively infrequently 
+de-allocated.
+
+Q2: Describe one technique in this paper.
+lock-free.
+Locks are used to protect shared data structure. Since lock-based 
+synchronization, say spinlock, could do great damage to the performance, like 
+preventing threads with allocated timeslots but with no locks from running, 
+thus CPU will do nothing actually. For lock-free data mechanism, every threads 
+may try to operate; if it fails, it rolls back and retry. The atomicity of the 
+operation ensures its safety.
