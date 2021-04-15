@@ -1,0 +1,13 @@
+1. application-oriented: 
+eg: (1) load-balancing is performed in the unit of application, rather than machine
+(2) log is keyed by application
+
+2. nested containers could be co-scheduled on the same machine:
+(1) the ourtermost one provides a pool of resources
+(2) the inner one provide deployment isolation
+(3) Borg calls the outer one "alloc", Kubernetes calls the outer one "pod"
+
+3. reconciliation controller loop:
+compare a desired state(eg, how many pods should match a label selector query) 
+against the observed state, and takes actions to converge the observed and desired 
+states
