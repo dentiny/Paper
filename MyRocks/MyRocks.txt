@@ -1,0 +1,24 @@
+InnoDB cons: DDIA P84
+(1) storage inefficiency, especially bad for SSD storage(Facebook has turned
+	to complete SSD storage)
+	1/ index fragmentation: when a page is split or when a row cannot fit into
+	an existing page, some space remain unused
+	2/ compression inefficiency: storage inefficiency
+	3/ space overhead per row for handling txns
+(2) write amplification and could cause occasional stalls(2.2)
+	eg: write several bytes could cause a whole page's overwrite
+
+UDB(User Database):
+1. TAO: cache layer for underlying DB layer
+2. DB layer replication:
+(1) async for cross-region replication
+(2) semi-sync(one sync, other async) for for in-region replication
+(3) binlog: 1/ for replication
+	2/ for wormhole(distributed pub-sub service) to invalidate TAO
+
+design goal:
+1. better space optimized, lower write amplification
+2. LSM-Tree better friendly to tiered storage
+3. performance and efficiency goal(3.2.2)
+	1/ reduce db space by at least 50%
+	2/ achieve without regression CPU and IO usage
