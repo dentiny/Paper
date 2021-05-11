@@ -1,0 +1,9 @@
+For communication, infrastructure and middleware provides performance,
+application provides reliability.
+
+(1) Low-level system doesn't know the whole story(eg, checksum for file
+transferred) thus have to implement end-to-end check and retry. Extra effort
+expended in the communication system only reduces frequency of retries from
+application level.
+(2) Low-level system may be common component for several upper-level
+applications, some may not require "reliability" guarentee.
