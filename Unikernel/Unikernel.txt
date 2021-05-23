@@ -1,0 +1,10 @@
+1. libOS: a special collection of libraries that provides needed OS functions
+in a compilable format.
+
+2. monolithic kernel: when a program runs, there's kernel and user space
+unikernel: There's only one program running(one single image) and it contains
+everything from high-level application to low-level device IO routine. It
+requires no shared libraries and no OS; it's a completely self-contained env-
+ironment and can be deposited into a blank virtual machine and boot up.
+
+3. docker vs unikernel: docker depends on hostOS, hypervisor, and daemon
