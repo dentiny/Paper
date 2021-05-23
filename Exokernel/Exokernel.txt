@@ -1,0 +1,17 @@
+1. kernel provides program environment as virtualized hardware
+application runs directly on (virtualized) hardware
+
+ch2.2:
+To provide the maximum opportunity for application-level resource management, 
+the exokernel architecture consists of a thin exokernel veneer that multiplexes
+and exports physical resources securely through a set of low-level primitives.
+
+2. customization:
+monolithic kernel: overly general
+	- multiplex resource among competing applications with different demands
+
+3. security:
+(1) exokernel provides secure resource multiplexing by secure binding
+(2) secure binding decouples authorization from the actual use of a resource
+It performs authorization at bind time, and implement access checks at access 
+time without understanding them.
