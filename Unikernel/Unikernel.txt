@@ -8,3 +8,9 @@ requires no shared libraries and no OS; it's a completely self-contained env-
 ironment and can be deposited into a blank virtual machine and boot up.
 
 3. docker vs unikernel: docker depends on hostOS, hypervisor, and daemon
+
+conclusion:
+(1) package hardware abstraction into libOS and link with application as much
+as possible
+(2) kernel only takes care of multiplexing among mutiple libOS
+(3) docker leverages hypervisor as its kernel
