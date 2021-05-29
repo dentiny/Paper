@@ -1,0 +1,28 @@
+From DDIA chap9 note:
+1. transaction isolation('I' in ACID): avoid data race due to concurrently 
+executing transactions
+consistency('C' in CAP): coordinate the state of replicas in the face of delays
+and faults
+
+2. (1) linearizability('C' at CAP theory in distributed system field, also
+called strong consistency):
+1/ system appears as if there's only one machine
+2/ if a client completes a write, all clients should see the value written
+3/ recency guarentee: data read is promised to be the lastest
+
+(2) serializability:
+1/ transactions are executed and committed in a serial order(isolation)
+2/ if node1 writes A, node2 writes B, all nodes executes in the same order(get
+the same eventual value)
+3/ after write B is considered complete, reader could still get A
+
+(3) strict serializability: linearizability and serializability
+
+(4) causal consistency: guarentee partial ordering, while linearizability
+promises total ordering
+
+3. drawback:
+(1) can only capture causality it sees: hard to related all causality
+(2) cannot always enforce global invariant
+eg: West Coast draw $10, East Coast draw $10, all succeed but there's only $10
+(3) programmers have to reason about concurrent writes
