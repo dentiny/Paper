@@ -1,0 +1,20 @@
+sidecar pattern: Deploy components of an application into a separate process 
+or container to provide isolation and encapsulation.
+Suppose a monolithic application has a webserver and logserver.
+1. container is the unit of resource accounting and allocation
+webserver should have lower latency, while logserver could ensure longer
+2. container is the unit of packaging
+webserver and logserver could be developped, tested, and packaged seperately
+3. container is the unit of reuse
+4. container provides failure containment boundary
+webserver still serves when logserver fails
+5. container is the unit of deployment
+allows each piece to update, rollback; but every combination shoud be tested
+
+ambassador pattern: Create helper services that send network requests on behalf
+of a consumer service or application.
+1. application communicates with ambassador container
+2. ambassador actually proxy to different shards
+
+adaptor pattern: present the outside world with a simplified, homogenized view
+of an application
