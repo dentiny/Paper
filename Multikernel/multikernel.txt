@@ -1,0 +1,50 @@
+OS structure:
+(1) monolithic kernel
+(2) microkernel
+(3) exokernel: OS only provides virtualized hardware
+(4) unikernel: There's only one program running(one single image) and it
+contains everything from high-level application to low-level device IO routine.
+It requires no shared libraries and no OS; it's a completely self-contained
+environment and can be deposited into a blank virtual machine and boot up.
+(5) multikernel: treats the machine as a network of independent cores, assumes
+no inter-core sharing at the lowest level, and moves traditional OS
+functionality to a distributed system of processes that communicate via 
+message-passing(abstract)
+
+Why monolithic kernel and shared memory doesn't work well?
+(1) hardward changes
+	- rising core counts
+	- increasing hardware diversity
+	- hardware heterogenity(eg: CPU, GPU, NIC, etc)
+	shared cache and memory(cache coherance) would hurt performance
+(2) message-passing cost less than shared-memory
+	cache-coherent shared memory exhibits scalability problems
+
+design principle:
+(1) make all inter-core communication explicit
+	1/ all inter-core communication is performed using explicit messages
+	2/ no memory is shared between the code running on each core, except for
+	that used for messaging channels
+	3/ using messages to access or update state rapidly becomes more efficient
+	than shared memory access as the number of cache-lines involved increases
+	4/ optimizations:
+		pipelining: have a number of requests in flight at once
+		batching: send a number of requests in one message, or process a number 
+		of messages together
+(2) make OS structure hardware-neutral
+	only two aspects of OS are targeted at specific machine architectures: 
+	messaging transport mechanisms, and interface to hardware(CPUs and devices)
+	1/ adapting the OS to run on hardware with new performance characteristics 
+	will not require extensive, cross-cutting changes to the code base (as was 
+	the case with recent scalability enhancements to Linux and Windows)
+	2/ enable late binding of both the protocol implementation and message 
+	transport customized protocol implementation(eg: tune queue length) for 
+	specific hardware
+(3) view state as replicated instead of shared
+	1/ some states should be accessible to multiple cores(eg: Windows dispatcher 
+	database or Linux scheduler queues)
+	2/ improve system scalability by reducing load on the system interconnect, 
+	contention for memory, and overhead for synchronization
+	3/ potential optimization:  privately share a replica of system state 
+	between a group of closely-coupled cores or hardware threads, protected by
+	a shared-memory synchronization technique like spinlocks
