@@ -14,6 +14,8 @@ the actual in-flight bytes is bandwidth + buffer size
 [right edge of figure1]
 
 BBR detects the beginning of filling of bandwidth(the left edge of figure1), by
-seperately calculating RTT and bandwidth
+detecting effective bandwidth(without buffer) no longer grows; in other words,
+begins to utilize buffer
+
 note: they cannot be calculated at the same time
 since RTT needs empty network environment, while bandwith needs to fully fill it
