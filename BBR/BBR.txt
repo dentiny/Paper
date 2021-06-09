@@ -1,0 +1,19 @@
+rwnd: receive window size
+cwnd: congestion control window size, also in-flight bytes
+
+TCP flow control: traffic between sender and receiver(rwnd)
+congestion control: traffic placed by transport layer into the network(cwnd)
+=> # of bytes to send = min(rwnd, cwnd)
+
+loss-based congestion control:
+1. reduce cwnd when loss detected
+2. linearly increase cwnd until next loss happens
+potential problem: excessive buffering of packets
+network devices have larger and larger buffer, so when packet loss is detected,
+the actual in-flight bytes is bandwidth + buffer size
+[right edge of figure1]
+
+BBR detects the beginning of filling of bandwidth(the left edge of figure1), by
+seperately calculating RTT and bandwidth
+note: they cannot be calculated at the same time
+since RTT needs empty network environment, while bandwith needs to fully fill it
