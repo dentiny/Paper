@@ -1,0 +1,5 @@
+How logical clock works:
+1. Event happens within a process is incremented with 1
+2. Message passing: local clock = max(received clock, local clock)
+3. logical clock only guarentees partial ordering
+use case: distributed mutual exclusion algorithm
