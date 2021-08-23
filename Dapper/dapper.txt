@@ -1,0 +1,11 @@
+1. three attributes for tracing:
+(1) trace: basic unit of tracing
+(2) span: trace is organized as tree of spans, every span has its unique id
+and parent span
+(3) annotation: provide additional information for span
+
+2. performance improvement:
+(1) use sampling instead of recording every event
+(2) 1/ span data written to local log files
+2/ pulled from production hosts by dapper deamon
+3/ write to a cell of BigTable repository
