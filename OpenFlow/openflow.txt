@@ -1,0 +1,21 @@
+components for OpenFlow:
+1. Flow Table, with an action associated with each flow entry, to tell the 
+switch how to process the flow
+actions:
+(1) forward packet to a given port(s)
+(2) encapsulate and forward packets to Secure Channel
+It's typically used for the first packet in a new flow, so controller can
+decide whether the flow should be added to the Flow Table
+(3) drop the packet
+(4) forward packets through switch's normal processing pipeline
+2. Secure Channel, connects the switch to a remote control process(namely, 
+controller)
+controller adds or remove entries to/from the Flow Table
+3. OpenFlow Protocol, provides an open and standard way for a controller to 
+communicate with a switch
+
+some use-cases for OpenFlow:
+(1) simple forward, which changes the original routing rule
+(2) load balancing
+(3) firewall
+(4) provide isolated network, like VLAN
