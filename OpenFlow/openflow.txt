@@ -14,8 +14,25 @@ controller adds or remove entries to/from the Flow Table
 3. OpenFlow Protocol, provides an open and standard way for a controller to 
 communicate with a switch
 
-some use-cases for OpenFlow:
+some usecases for OpenFlow:
 (1) simple forward, which changes the original routing rule
 (2) load balancing
 (3) firewall
 (4) provide isolated network, like VLAN
+
+usecase for Google:
+1. preconditions:
+(1) it controls the applications, servers, and LANs all the way to the edge
+of network
+(2) most b/w-intensive applications perform large-scale data copies from one
+site to another. It benefits most from high levels of average b/w and can 
+adapt transmission rate based on available capacity, also could defer to higher
+priority apps
+(3) no more than a dozon datacenter deployment
+
+2. two kinds of network applications within Google:
+(1) user-facing network peers with and exchanges traffic with other Internet 
+domains
+(2) connectivity among data-centers, eg: for asynchronous data copies, index 
+pushes, end-user data replication
+B4 adapts the second one.
