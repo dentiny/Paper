@@ -1,0 +1,29 @@
+1. basic concepts:
+data plane: forwardling plane, responsible for forwarding data
+control plane: responsible for the policy to forward data
+
+2. performance issue within Linux:
+(1) it's designed under assumption of multiple applications sharing one core
+But # of cores are growing bigger and bigger
+(2) assumption: packet inter-arrival times being many times higher than 
+interrupts and syscalls, which is not that correct in data-center
+(3) data sent from application layer to NIC involves multiple copying, which
+could be avoided by zero-copy IO
+
+3. design points:
+(1) Ensure security via Dune
+1/ get dedicated cores and NIC queues
+2/ leverage existing Linux kernel infra, eg: file system
+(2) run-to-completion: each task runs until it finishes or explicitly yields
+1/ improve data-cache locality
+2/ remove scheduling unpredictability
+3/ Linux: cache eviction, core-to-core data movement, lock contention, context
+switch
+(3) adaptive batching:
+1/ avoid high latency due to batching
+2/ improve instruction-cache locality and instruction prefetching
+(4) flow consistent hashing:
+1/ leverage multiple NIC queues for parallelism
+2/ synchonizaion and coherance-free operation
+(5) zero-copy IO: shared memory
+use page table to map packet buffer into both IX and application
