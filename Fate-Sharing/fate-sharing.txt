@@ -1,0 +1,15 @@
+Stateless networks’ principle: fate-sharing
+(1) The conversation shares the same fate with the “ends”
+(2) “it is acceptable to lose the state information associated with an entity 
+if, at the same time, the entity itself is lost.”
+
+Advantages
+(1) Fate-sharing protects against any number of intermediate network failures 
+While protect within intermediate network needs replication, only protects 
+limited # of failures
+(2) Fate-sharing is much easier to engineer.
+
+The result: a “best-effort” network
+(1) The IP (Internet Protocol) layer doesn’t really provide anything other than
+“best-effort” delivery (i.e., addressing and routing).
+(2) The end hosts provide conversation protection mechanisms
