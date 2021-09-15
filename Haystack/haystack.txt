@@ -1,0 +1,52 @@
+1. motivation:
+access pattern: written once, read often, never modified
+current issue:
+(1) CDN only works for hot data, doesn't resolve tail latency
+(2) caching(whether NAS's cache, or external cache like memcache) has limited
+help on reducing disk operations
+(3) current storage system(MySQL, NAS, Hadoop) doesn't solve problem
+
+key issue: if every photo is stored as a seperate file, it involves multiple 
+disk IOs, especially metadata loading into from disk into memory(bottleneck)
+1/ filename -> inode, search from directory level by level
+2/ load metadata by inode
+3/ load actual data
+
+2. haystack: 
+(1) accept truth that cold photo access would be disk operation
+(2) store multiple photos in a single file, and maintain large files
+-> reduce memory used for filesystem metadata, keep all within memory
+
+3. components: 
+URL: http://<CDN>/<Cache>/<Machine ID>/<Logical volume, Photo ID>
+(1) Directory
+1/ manage metadata when read and write
+2/ when read, decide whether CDN or Cache, provide <logical volumn, Photo ID>
+3/ when write, decide logical volumn and load balancing
+Note: data written to a logical volume will be replicated to all physical 
+volumes
+
+(2) Cache
+1/ only cache data not in CDN
+takeaway: when miss CDN, there's little chance to hit Cache
+2/ proactively push recently-uploaded photos into Cache
+
+(3) Store: retrieve filename, offset, size without disk operation
+maintain (key, alternate key) -> needle's flags, size, volume offset
+Note: key is Photo ID, alternate size or type
+
+4. fault tolerance:
+(1) detection: pitch-fork, check Store machine periodically
+(2) recovery: bulk-sync, heavy-handed, but rare(a few each month)
+
+5. optimizations:
+(1) index file storing (key, alternate key, flags, size, offset) for quicker
+recovery and initialization
+(2) batch upload
+(3) delete files by mark-and-compaction
+
+6. takeaway:
+(1) use Directory for directory metadata to inode translation
+(2) store multiple photos within one large file to reduce disk operation of 
+cold data, mainly to solve tail latency
+(3) store (key, alternate key) -> (flags, size, offset) within memory
