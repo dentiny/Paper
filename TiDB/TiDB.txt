@@ -1,0 +1,41 @@
+motivation: HTAP(OLTP & OLAP)
+
+1. add  learner to each Raft group
+(1) asynchronously replicate from Raft group leader
+  - when initialize a new TiFlash instance, leader replicate data to learner
+  - if data too large, leader sends snapshot for its data
+(2) learner transform wor-based data into column-based
+  - transaction query and analytical query could be processed in isolated 
+    resource(less synchronization overhead)
+  - generally use row-based for OLTP, use column-based for OLAP
+  - query optimizer decide on whether row-based or column-based
+
+2. optimization for Raft
+original Raft:
+(1) leader receives request from SQL engine layer
+(2) leader appends requests to its log
+(3) leader sends new log entries to followers, which in turn append entries to
+  their logs
+(4) leader waits for followers to respond, commit locally if quorum agree
+(5) leader sends back result to client
+
+optimizations:
+(1) step(2) and (3) can be handled concurrently since no dependency
+  - if appending log fails on leader but quorum agree, log can still be 
+  committed
+(2) after sending the log, leader doesn't have to wait
+  - it can assume success and send further logs with predicted log index
+  - when failure occurs, leader adjust log index and resend
+(3) apply logs locally can be processed within a seperate thread
+
+3. TiFlash(column-based storage): 
+use Columnar Delta Tree for high-throughput read and write
+(1) storage layer similar to LSMT
+  - only two layers(L0, L1): delta space and stable space
+  - delta space contains deleted entries, stable space is the final version
+  - periodically merge multiple delta files into one, periodially dump delta
+  files into stable space files
+(2) merge deltas is expensive, since related keys are disordered in delta space
+  - build a B+ tree on top of delta space
+  - each delta item of updates is inserted into B+ tree ordered by its key and 
+  timestamp
