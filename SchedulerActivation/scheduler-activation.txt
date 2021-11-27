@@ -1,0 +1,60 @@
+motivation:
+1. large overhead for kernel-level thread
+(1) from Table I, it's slower than user-level thread for an order of magnitude 
+(2) all operations on kernel threads involve kernel trap, parameter checking
+(3) it's for general purpose, lack of flexibility
+2. small overhead for user-level thread
+(1) less overhead: within an order of magnitude as procedural call
+(2) no tradeoff between performance and flexibility, can have them both
+(3) flexibility comes from support for customized scheduling
+(4) disadvantages: current OS kernel lacks supports for user threads, eg:
+1/ locking: one user thread locks, other contending threads have to wait
+2/ blocking: when one user thread blocks, its thread blocks, even if there're 
+other available user threads to schedule
+3/ priority
+
+adaptation for current OS kernel(ch3)
+
+Table II: scheduler activation upcall points
+1. add processor
+2. processor has been preempted
+3. scheduler activation has blocked
+4. scheduler activation has unblocked
+
+Q1: When a user level thread issues a system call that is involved in a slow 
+I/O.  What will scheduler activation scheme do to efficiently use the 
+processor that this user-level thread is on?
+
+Normally without scheduler activation:
+When a user-level thread makes a blocking I/O request or takes a page fault,
+though, the kernel thread serving as its virtual processor also blocks. As a
+result, the physical processor is lost to the address space while the I/O is
+pending, because there is no kernel thread to run other user-level threads on
+the just-idled processor.
+
+With scheduler activation:
+To notify the user of this blocking event, the kernel takes the processor that
+had been running thread 1 and performs an upcall in the context of a fresh 
+scheduler activation. This is so that the library knows that the thread is 
+blocked and there is a vacant processor so it can schedule another ready thread
+if there are any.
+
+Q2: In table II, why does the kernel need to notify the user-space scheduler 
+about the list of threads that have been preempted? 
+
+The responsibility of resource allocation and thread scheduling is divided 
+between the kernel and the user-space thread library -- the kernel is only 
+responsible for assigning processors to processes, and within each process 
+the thread library is responsible for making scheduling decisions for the 
+threads within.  
+
+You need to let the user-space scheduler know so that it knows the threads 
+that can be added to the ready queue. Because the kernel is not handling the 
+scheduling of the threads in user space, it must communicate to the user-space
+scheduler. And only user-space scheduler can do the arrangement.
+
+For example, if a core running a thread with higher priority is preempted, the 
+thread library can reschedule that higher priority on an available core instead
+of keeping a low-priority thread running.
+
+This assumes that the preempted state is also still ready when called.
