@@ -13,6 +13,14 @@ motivation:
 other available user threads to schedule
 3/ priority
 
+From Duke CS510: poor integration for ULTS(User-Level Thread System):
+1. Application has idle cores => core is wasted
+2. Thread blocks in kernel for IO => Applications lose the core
+3. Kernel preempts a core running thread T:
+(1) T holds a spinlock => wasted cycles
+(2) T holds any lock => other threads wait longer for the lock
+(3) T is a high-priority thread => priority inversion 
+
 adaptation for current OS kernel(ch3)
 
 Table II: scheduler activation upcall points
