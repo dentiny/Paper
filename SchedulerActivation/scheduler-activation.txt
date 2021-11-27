@@ -21,6 +21,12 @@ From Duke CS510: poor integration for ULTS(User-Level Thread System):
 (2) T holds any lock => other threads wait longer for the lock
 (3) T is a high-priority thread => priority inversion 
 
+reconceptualization the kernel interface:
+1. kernel  gives processes a virtualized multiprocessor(MP)
+2. in-process ULTS manages its virtual MP
+3. in-process ULTS knows what/how many cores it has, manages them its own way
+4. ULTS notifies kernel of its demand for cores
+
 adaptation for current OS kernel(ch3)
 
 Table II: scheduler activation upcall points
@@ -66,3 +72,14 @@ thread library can reschedule that higher priority on an available core instead
 of keeping a low-priority thread running.
 
 This assumes that the preempted state is also still ready when called.
+
+Summary: 
+separate thread allocation(by kernel) and scheduling(by scheduler activation)
+1. processor allocation(allocation of processors to address space) is done by 
+the kernel
+2. thread scheduling(assignment of an address space's threads to its processors)
+is done by by each address space
+3. the kernel notifies the address space thread scheduler of every event 
+affecting the address space
+4. the address space notifies the kernel of the subset of user-level events that
+can affect processor allocation decisions
