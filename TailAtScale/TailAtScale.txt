@@ -1,0 +1,46 @@
+Why variability exists:
+1. shared resource contention
+2. daemon: could cause multi-millisecond hiccups
+3. maintainence activilty: garbage collection, log compaction, etc
+4. queue: multiple layers of queueing in intermediate servers and network 
+switches
+5. hardware power limit and energy management
+6. SSD garbage collection
+
+reduce variability: how to reduce latency beforehand or on-the-fly
+1. differentiate service classes and higher-priority queueing
+- scheduler higher-priority tasks first
+2. reduce HOL(Head-of-Line) blocking
+- split large task into small tasks
+3. manage background activities
+- Eg: maintainance activities mentioned above
+
+live with latency variability:
+For single request:
+1. hedged request
+- issue the same request to multiple replicas and use the result from whichever
+replica responds first
+2. tied request
+- not choose but rather enqueue copies of a request in multiple services 
+simutaneously and allow servers to communicate updates on the status
+3. an alternative to tied-request and hedged-request is to probe remote queues
+first. then submit request to the least-loaded server
+NOTE: these techniques is only effective when phenomenon that causes variability
+doesn't tend to simutaneously affect multiple request replicas
+
+For cross-requests:
+0. badness of static partition
+- performance of underlying machine is not constant over time
+- outliners of the partition could cause data-induced load imbalance
+1. micro-partition
+- generate many more partitions than there're machines in the service
+2. selective replication
+- an enhancement of micro-partitioning
+- detect/predict certain items which are likely to cause load imbalance, and 
+create additional replicas for them
+3. latency-induced probation
+- exclude a particularly slow machine
+
+misc:
+1. provide users slightly-incomplete/good-enough response in exchange for better 
+end-to-end latency
