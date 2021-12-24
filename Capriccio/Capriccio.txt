@@ -1,0 +1,21 @@
+asynchronous model performs best when:
+1. There are a large number of tasks so there is likely always at least one 
+task that can make progress
+2. The tasks perform lots of I/O, causing a synchronous program to waste lots
+of time blocking when other tasks could be running
+3. The tasks are largely independent from one another so there is little need 
+for inter-task communication (and thus for one task to wait upon another)
+
+capriccio:
+1. In order to retain control of the processor when a userlevel thread executes
+a blocking I/O call, a user-level threading package overrides these blocking 
+calls and replaces them internally with non-blocking equivalents
+2. use compile-time analysis and call graph to evaluate stack memory usage, thus
+avoiding preallocation of large stacks, which in turn reduces virtual memory 
+pressure when running large number of threads
+3. resource-aware scheduling:
+First, the current handler for a task provides information about the task’s 
+location in the processing chain. This information can be used to give priority 
+to tasks that are closer to completion, hence reducing load on the system.
+Second, the lengths of the handlers’ task queues can be used to determine which
+stages are bottlenecks and can indicate when the server is overloaded.
