@@ -1,0 +1,26 @@
+motivation:
+1. hard to implement efficient transactions on top of existing file system
+- cannot overwrite old data, have to keep them until transaction committed
+- writing to new files instead of overwriting means many files for each object
+- potential double write problem for WAL, along with fsync overhead
+2. local metadata greatly affect performance of the distributed file system
+- FileStore object iteration: place files by hash value, when files number 
+larger than 100, split into new directory; when files number less than 50, merge
+with upper-level directory
+- BlueStore uses RocksDB to manage metadata instead of filesystem attributes
+3. hard to adopt emerging storage hardware
+
+general methods for atomicity:
+1. journaling: file system defaults only logging metadata; logging all file
+content would lead to double write
+2. ROW (Redirect on Write): write data into new place, atomically update 
+metadata
+- if metadata aligns with disk block size, which is fine
+- if it doesn't align, RWW (Read Modify Write) read old data, merge with new 
+data, flush to disk in alignment
+
+
+BlueStore:
+1. data goes to BlockDevice
+2. metadata stores at RocksDB
+3. implement block Allocator
