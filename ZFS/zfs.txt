@@ -1,0 +1,46 @@
+disk connection type and protocol:
+1. SCSI (Small Computer System Interface), iSCSI
+2. FC (Fiber Channel), FCoE (Fiber Channel over Ethernet)
+3. IDE (Integrated Drive Electronics), ATA (Advanced Technology Attachment),
+SATA (Serial ATA)
+
+feature: 
+a general-purpose POSIX file system using pool storage, transactional
+copy-on-write of all blocks, an object-based storage model, and self-validating
+checksums
+
+pooled storage:
+1. manage storage in the similar way as virtual memory: decouple file system 
+from physical storage, multiple file systems should be able to share one pool 
+of storage, rather than one-to-one association between file system and a 
+particular storage device (or potion thereof)
+2. implement feature of volume manager (i.e. mirroring) within ZFS
+
+storage model (3.1):
+traditional storage stack:
+(1) device driver exports block device interface to volume manager
+(2) VM exports another block device interface to file system
+(3) file system exports vnode operation to syscall layer
+
+ZFS storage stack:
+(1) device driver exports block device interface to SPA (Storage Pool Allocator)
+(2) SPA handles block allocation and IO, exports virtually addressed, explicitly
+allocated and freed blocks to DMU (Data Management Unit)
+(3) DMU turns virtually addressed blocked into a transactional object interface
+for ZPL (ZFS POSIX layer)
+(4) ZPL implements POSIX file system on top of DMU objects, and exports vnode
+operations to syscall layer
+
+technical details:
+1. (checksum) checksum is kept at parent block, to make simutaneous corruption
+of data and checksum less likely
+2. on-disk consistency is maintained by DMU, rather than at the block allocation
+level
+3. (SPA) allocate in the unit of block
+NOTE: LFS's allocation unit from small to big: block, extent, segment
+(1) segment cleaner could introduce large overhead
+(2) slab allocator could meet the demand for large continuous space
+4. (DMU) implements transactional object, identified by 64-bit ID
+(0) blocks are organized in tree structure
+(1) all blocks are written in copy-on-write
+(2) update for uberblock (root of block tree) is atomic in-place update
