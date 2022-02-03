@@ -1,0 +1,29 @@
+motivation:
+The serialized and compressed nature of these file formats makes reading
+them CPU bound in systems with high-speed network and storage devices, resulting
+in severely reduced scalability (client-side CPU bound impedes scalability)
+
+possible solution:
+have programmable storage systems with low-level extension mechanisms that
+allow implementing application-specific data manipulation and access into their
+IO path
+
+design:
+1. use parquet file layout, components:
+(1) header
+(2) data block: store real data:
+1/ store in RowGroups
+2/ every RG contains multiple ColumnChunks, which implements columnar storage
+3/ every CC contains Data page and Directory page, which implements fine-
+granularity storage
+(3) footer: stores metadata
+Additional, it leverages Predicate Pushdown (execute filter in advance, reduce 
+data transferred)
+
+2. striped file design:
+parquet files rewritten by padding each row group to create files with equal-
+sized and object-aligned groups
+
+3. split file design:
+parquet files are split into multiple smaller parquet files and are accompanied
+by index for preserving parquet optimization
