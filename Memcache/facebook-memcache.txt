@@ -1,0 +1,90 @@
+workload:
+1. read-heavy, an order of magnitude more content than write
+2. heterogeneous data source, i.e. MySQL, HDFS, etc
+- need a caching layer separate with persistency layer
+
+functionality of memcache:
+1. read path:
+(1) fetch from memcache
+(2) if no, fetch from database
+(3) set(k, v) in memcache
+2. write path:
+(1) update in database
+(2) delete k in memcache
+3. it also serves as generic cache, to store pre-computed results
+
+optimization on latency (3.1):
+1. implement workload on client-side, i.e. serialization, compression, request 
+routing, error handling, request batching; also maintain a map of all available
+servers
+2. request batching: 
+(1) construct a DAG to decide dependency and issue request in batches
+(2) mcroutes aggregates memcached RPCs from many clients and send them in a 
+batch to memcache servers
+- mcroute is a proxy, which aggregates TCP, UDP bypasses mcroutine
+
+3. C/S communication:
+(1) UDP for "get" request, TCP for "put" and "delete"
+(2) treat "get" error as cache miss, and not put k-v pair back in order not to
+increase system load
+(3) avoid incast: use sliding-window to control outstanding requests
+- TCP flow control and congestion control only applies to a single stream
+
+partition and replication:
+(1) shard frequently-visited keys into multiple memcached servers
+(2) regional pool stores less-commonly visited keys in a region
+- cluster: front-end and memcache servers
+- regions: multiple clusters and a storage cluster
+- one regions contains a region pool, which is accessible for all clusters
+(3) replicate front-end/memcache as a whole
+NOTE: "memcached" is for open source software, "memcache" is distributed 
+caching layer 
+
+failure handling (3.3):
+(1) dedicate a small set of mechines (gutter) to take over for failed servers
+- account for ~1% requests
+(2) entries in gutter expires quickly
+
+across-geo repliacation:
+(1) write first updates to primary database synchronously (to ensure single 
+source of truth), then updates to other regions asynchronously
+(2) for cold cluster (when a new cluster is fired-up) fetch keys from warm clusters
+
+lease is used to: (1) make sure latest lease wins; (2) avoid thundering herd
+
+Q: What is the "stale set" problem in 3.2.1, and how do leases solve it?
+
+A: Here's an example of the "stale set" problem:
+
+1. Client C1 asks memcache for k; memcache says k doesn't exist.
+2. C1 asks MySQL for k, MySQL replies with value 1.
+   C1 is slow at this point for some reason...
+3. Someone updates k's value in MySQL to 2.
+4. MySQL/mcsqueal/mcrouter send an invalidate for k to memcache,
+   though memcache is not caching k, so there's nothing to invalidate.
+5. C2 asks memcache for k; memcache says k doesn't exist.
+6. C2 asks MySQL for k, mySQL replies with value 2.
+7. C2 installs k=2 in memcache.
+8. C1 installs k=1 in memcache.
+
+Now memcache has a stale version of k, and it may never be updated.
+
+The paper's leases would fix the example in the following way:
+
+1. Client C1 asks memcache for k; memcache says k doesn't exist,
+   and returns lease L1 to C1.
+2. C1 asks MySQL for k, MySQL replies with value 1.
+   C1 is slow at this point for some reason...
+3. Someone updates k's value in MySQL to 2.
+4. MySQL/mcsqueal/mcrouter send an invalidate for k to memcache,
+   though memcache is not caching k, so there's nothing to invalidate.
+   But memcache does invalidate C1's lease L1 (deletes L1 from its set
+   of valid leases).
+5. C2 asks memcache for k; memcache says k doesn't exist,
+   and returns lease L2 to C2 (since there was no current lease for k).
+6. C2 asks MySQL for k, mySQL replies with value 2.
+7. C2 installs k=2 in memcache, supplying valid lease L2.
+8. C1 installs k=1 in memcache, supplying invalid lease L1,
+   so memcache ignores C1.
+
+Now memcache is left caching the correct k=2
