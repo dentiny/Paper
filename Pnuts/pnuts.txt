@@ -1,0 +1,22 @@
+design goal:
+(1) world-wide, geographically-distributed data-centers
+(2) weak-consistency model
+
+architecture:
+(1) table is partitioned into tablets, in one region, there's only one copy 
+(tablet) for each data
+(2) tablet controller manages interval mapping (which knows data belongs to 
+which tablet), manages tablet's split and merge
+(3) tablet controller is the SPOF (Single Point of Failure), but not bottleneck,
+since it's not in the datapath
+(4) router keeps cached version of interval mapping, periodically poll and 
+update interval mapping; it handles request
+(5) YMB (Message Broker) is topic-based pub/sub, and performs asynchronously 
+replication across regions
+
+consistency model: per-record timeline consistency model
+(1) all replicas of a given record apply all updates to the record in the same
+order
+(2) consistency provided by designating one copy of a record as the same master,
+and directly all updates to the master copy
+(3) make no guarantees as to consistency for multi-record transactions
