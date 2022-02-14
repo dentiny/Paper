@@ -1,0 +1,57 @@
+motivation (abstract and 1):
+1. provides distributed lock service
+- allows its clients to synchronize their activities and to agree on basic 
+information about their environments
+2. primary goal is reliability, availability and easy-to-understand semantics,
+throughput and storage capacity were considered secondary
+3. reliable but low-volume storage service
+4. Chubby provides higher-level interface than ZooKeeper (i.e. lock, filesystem)
+5. build upon existing Paxos consensus library
+
+croase-granularity locking:
++ less load on lock server
++ clients could implement their own finer-granularity locking
+- transfer of a lock from client to client may require costly recovery precedure
+finer-granularity locking:
+- unavailability of the lock server may cause many clients to stall
+
+locking (2.4):
+1. use fencing token/sequencer to uniquely identify a lock
+2. take advisory lock instead of mandatory lock
+- advisory lock: only gain exclusive or shared access when explicitly acquire a 
+lock. i.e. linux file system
+- mandatory lock: every access needs the lock to be acquired
+3. use virtual time or virtual synchrony to guarantee consistency within 
+distributed system (aka replicas)
+- virtual synchrony: manage a group of replicated process and coordinate 
+communication within group
+4. lock release:
+(1) release lock immediately when client actively release
+(2) wait for a lock-delay when lock released due to client failover
+
+event notification (2.5):
+- client notified when specific events happened
+- Chubby allows a collection of files to be mirrored, which relies on event
+notification (2.9)
+
+caching (2.7):
+- caching is needed, since client would poll server
+- cached data is invalidated on a change, instead of update: a client that 
+accesses a file might receive updates indefinitely, causing an unboundeded
+number of unnecessary updates
+
+session and KeepAlive (2.8):
+- could be combined with information and sent earlier
+- client maintains sa local lease timeout which is a conservative approximation
+of the master's lease timeout
+- handle transient server-side failover (2.9):
+(1) if KeepAlive timeouts, empties and disables cache, set session to "jeopardy"
+(2) wait for grace period, set to "safe" if response received, otherwise 
+"expired"
+
+scalability (3):
+1. proxy
+(1) 93% workload is KeepAlive
+(2) proxy doesn't help write workload, which passes through the proxy's cache
+(3) reduce the KeepAlive workload linearly
+2. partition
