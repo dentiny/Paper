@@ -1,0 +1,6 @@
+enhancement for MapReduce:
+1. query pushed down the tree and rewritten at each step, results are assembled
+by aggregating the replies received from lower levels of the tree
+2. provides high-level SQL declarative language to express query
+3. leverage column-striped storage representation, which enables it to read 
+less data from secondary storage and reduce CPU cost due to compression
