@@ -1,6 +1,12 @@
-enhancement for MapReduce:
-1. query pushed down the tree and rewritten at each step, results are assembled
+high-level introduction to Dremel:
+1. doesn't support creates and updates, it's used for read-only operations
+2. query pushed down the tree and rewritten at each step, results are assembled
 by aggregating the replies received from lower levels of the tree
-2. provides high-level SQL declarative language to express query
-3. leverage column-striped storage representation, which enables it to read 
+3. provides high-level SQL declarative language to express query
+4. leverage column-striped storage representation, which enables it to read 
 less data from secondary storage and reduce CPU cost due to compression
+- internal Google use protobuf (nested structure), Dremel converts it into 
+columnar storage
+5. Comparison with Hadoop (open-source version for MapReduce):
+1/ Hadoop also allows data analysis on massive datasets using SQL-like syntax
+2/ it doesn't leverage columnar IO, instead it leverages table indexing
