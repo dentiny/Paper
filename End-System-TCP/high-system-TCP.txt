@@ -1,0 +1,9 @@
+motivation:
+The limiting factor is not CPU processing power, but the ability to move data 
+through the host IO system and memory.
+
+several implementation:
+- interrupt coalescing
+- checksum offloading
+- zero-copy date movement by page remapping
+- large packet size, i.e. jumbo packet
