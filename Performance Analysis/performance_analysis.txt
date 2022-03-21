@@ -1,0 +1,36 @@
+problem statement method:
+- What makes you think there is a performance problem?
+- Has this system ever performed well?
+- What has changed recently? (Software? Hardware? Load?)
+- Can the performance degradation be expressed in terms of latency or runtime?
+- Does the problem affect other people or applications (or is it just you)?
+- What is the environment? What software and hardware are used? Versions? 
+Configuration?
+
+The Workload Characterization Method
+- Who is causing the load? Process ID, user ID, remote IP address?
+- Why is the load being called? Code path?
+- What are other characteristics of the load? IOPS, throughput, type?
+- How is the load changing over time?
+
+USE method: utilization, saturation, errors 
+Resource in this case means all physical server functional components (CPUs, 
+disks, buses, etc.) examined individually. Some software resources can be 
+examined using the same methodology, provided the metrics make sense.
+
+Utilization is the percentage of time that the resource is busy servicing work
+during a specific time interval. While busy, the resource may still be able to
+accept more work; the degree to which it cannot do so is identified by 
+saturation. That extra work is often waiting in a queue.
+
+For some resource types, including main memory, utilization is the capacity of
+the resource that is used. This is different from the time-based definition. 
+Once a capacity resource reaches 100-percent utilization, no more work can be 
+accepted, and it either queues the work (saturation) or returns errors, either 
+of which is identified by the USE method.
+
+Errors in terms of the USE method refers to the count of error events. Errors 
+should be investigated because they can degrade performance, and they may not 
+be immediately noticed when the failure mode is recoverable. This includes 
+operations that fail and are retried, as well as devices that fail in a pool 
+of redundant devices.
