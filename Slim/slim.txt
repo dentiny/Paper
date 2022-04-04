@@ -1,0 +1,24 @@
+four ways for docker networking:
+1. bridge
+(1) exclusively for container communication on the same host
+(2) each container has its own independent IP address, OS kernel routes between
+these containers
+
+2. host
+(1) container directly use the IP address of host network interface, and 
+containers cannot be configured their own IP address
+(2) the performance is close to the performance of directly using host's network
+
+3. Macvlan
+(1) allow the physical NIC to emulate multiple NICs each with a different MAC 
+address and IP address
+(2) complicates data center network routing
+(3) containers must choose IP address which don't overlap with other containers
+
+4. overlay
+(1) it's mostly the same network overlay way as virtual machines:
+application -> overlay network stack -> vSwitch -> host network stack
+(2) 1/ each application has its own network namespace and cgroup
+2/ a virtual network interface is created per container
+3/ the virtual network interface communicates with the outside with vSwitch
+(3) thus container has its own IP address and network configuration
