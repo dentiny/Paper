@@ -1,0 +1,32 @@
+why we should have one single filesystem:
+(1) global data sharing
+a data center often has multiple clusters (i.e. HDFS has upper limit of files)
+(2) low operational complexity
+-> we need a metadata service to play as a single filesystem
+
+operations are catagorized into three types:
+(1) only process the metadata of target file/directory, i.e. open, close, stat
+(2) process metadata of target file/directory and its parent, i.e. create, 
+delete, and readdir
+(3) rename operation, which processes the metadata for two files/directories
+and their parents
+
+challenges and solutions for metadata service:
+(1) directory tree partitioning is hard to have both metadata locality and load
+balancing
+solution:
+1/ characteristics for operations (see table 1)
+2/ splits metadata into two parts:
+access state (name, ID, permission) of the directory itself
+content state (entry list, timestamp) of the children
+3/ access state is cached on client-side
+content state is stored with its children's access state
+(2) rename coordinator
+rename could involve deadlock, relies on centralized coordinator for graph 
+dependency query
+(3) access state is cached on client-side with lazy invalidation
+1/ client connection number is huge, hard to implement server-side active 
+invalidation
+2/ lazy invalidation could be implemented as:
+when client declares it has the permission, include its cache timestamp and 
+compares it with the servers' invalidation timestamp
