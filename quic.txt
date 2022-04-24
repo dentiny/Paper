@@ -1,0 +1,25 @@
+1. connection establishment:
+(1) QUIC relies on a combined cryptographic and transport handshake for setting
+up a secure transport connection
+(2) on a successful handshake, client caches information about the origin
+(identified by URI schema, hostname, port); subsequent connections to the same 
+origin, clients establish encrypted connection with no additional round trip
+(3) version negotiation at the beginning of connection
+
+2. loss recovery:
+(1) TCP uses sequence number, original packet and retransmission packet have 
+the same seq; QUIC assigns new packet number for each packet
+(2) QUIC gets RTT (estimation) for packets, good for delay-based congestion
+control
+(3) QUIC’s acknowledgments support up to 256 ACK blocks, making QUIC more 
+resilient to reordering and loss than TCP with SACK
+
+3. flow control:
+supports stream-based and connection-based flow control
+
+4. NAT rebinding and connection migration:
+(1) QUIC connection is identified by a ConnectionID, which enables connection
+to survive change to the clients' IP and port change
+(2) change could be caused by NAT timeout and rebinding, or client changing 
+network connectivity
+NAT timeout for TCP is 24 hours (magnitude), for UDP is 5 minutes (magnitude)
