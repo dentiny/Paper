@@ -1,0 +1,33 @@
+1. seperate compute and storage
+- share nothing architecture tightly couples compute resources and storage
+resources, which is not good for heterogeneous workload, online upgrade (since 
+everything is tightly coupled)
+- build storage upon Amazon S3, compute upon EC2
+- use local disk for temporary data and cache
+
+2. components:
+- cloud service: authentication, query optimizer, transaction manager, metadata
+- virtual wareshouse: responsible for computation, also owns local cache
+- data storage
+
+3. local caching and file stealing:
+- cache stores columns fetched
+- query optimizer performs consistent hashing based on filename, to improve 
+cache hit rate, and avoid repeated storage for the same content
+- apply lazy consistent hashing, which means for membership change, stale
+content is deleted due to LRU caching policy, rather than positively updated
+- file stealing: request files from peers; if a node has too many files 
+requested, deny the request to avoid overloading and stranggler
+
+4. concurrency control:
+- implements SI (Snapshot Isolation) by MVCC: every changed object is kept for
+some duration
+- supports time travel and clone of database objects
+
+5. pruning:
+- metadata knows which files are needed
+
+6. fault tolerance:
+- metadata store is distributed and replicated across multiple Availability Zone
+- Virtual Warehouses are not distributed across AZs, since throughput is much 
+higher in the same AZ
