@@ -24,8 +24,10 @@ requested, deny the request to avoid overloading and stranggler
 some duration
 - supports time travel and clone of database objects
 
-5. pruning:
-- metadata knows which files are needed
+5. pruning (similar effect as index):
+- system maintains data distribution information for a given chunk of data (set 
+of records, file, block), in particular min and max values within the chunk
+=> metadata knows which files are needed
 
 6. fault tolerance:
 - metadata store is distributed and replicated across multiple Availability Zone
