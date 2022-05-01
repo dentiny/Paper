@@ -1,0 +1,16 @@
+Current success for LSM tree:
+For HDD, random IO is over 100x slower then sequential IO, so performing 
+additional sequential read and write to continually sort keys is excellent 
+trade-off.
+
+But for SSD,
+(1) difference between random and sequential IO is not that large;
+(2) lots of sequential IO to reduce later random IO may be wasting bandwidth;
+(3) SSD could be wear out for repeated write.
+
+Important features for WiscKey:
+(1) seperate keys from values: keep only keys in LSM-tree and values in a 
+separate log file
+(2) for unsorted values (i.e. accessed in range query), use parallel random-read
+characteristics of SSD (implemented by threadpool)
+(3) for garbage collection for values, maintains a ring-buffer (head and tail)
