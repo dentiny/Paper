@@ -1,0 +1,23 @@
+pain point:
+1. no live upgrade
+2. development velopcity
+(1) required by storage hardware and new demands by cloud systems
+(2) several implementations:
+	- kernel modules
+	- upcall (i.e. FUSE): performance hurt, no reuse existing kernel functionality
+	- in-kernel interpreter (i.e. eBPF): not good for big programs development
+
+Bento features:
+(1) Rust
+(2) a build flag change leads to user-space and kernel-space change
+(3) live upgrade:
+	- quiesce running filesystem
+	- transfer state/memory ownership to new instance
+
+Bento components:
+(1) BentoFS: VFS interface, dispatch to actual filesystem
+(2) FS module: contains FS and two libraries (libBentoFS and libBentoKS)
+(3) between BentoFS and fs module, convert C to Rust
+(4) live upgrade happens at BentoFS
+(5) debugging: a flag to switch user/kernel space
+	- provides user-level replacement for kernel data structure (i.e. kernel cache)
