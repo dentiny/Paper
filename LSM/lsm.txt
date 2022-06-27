@@ -1,0 +1,41 @@
+optimization trade-offs for LSM:
+(1) read performance
+(2) write performance
+(3) space amplification
+(4) write amplification
+
+misc optimization:
+(1) bigger buffer, less number of levels
++ read performance
+- large tail latency
+
+(2) read optmization:
+1/ bloom filter
+2/ fence pointer (also known as zonemap): stores min/max value within run
+3/ block cache: caches bloom and fence pointer within memory
+
+optimization strategies for LSM:
+(1) data layout: how to organize data on device
+leveling vs tiering
+For leveling, it performs eager compaction, every level has only one run
++ good read performance
++ good space amplification
+- poor writer amplification
+For tiering, it performs lazy compaction, evey level could have multiple runs
++ good ingestiion performance
+- poor read performance
+- poor space amplification
+
+(2) compaction granularity: how much data to move at a time
+Eg: use "file" as movement unit, rather than "level"
++/- perform similar data movement
++ amortized cost of compaction
++ predictable performance
+
+(3) data movement policy: which block of data to move
+Eg: WiscKey splits key and value
+
+(4) compaction trigger: when to re-organize data layout
+1/ compaction with background thread
+2/ prioritize write over compaction
+3/ IO scheduler
