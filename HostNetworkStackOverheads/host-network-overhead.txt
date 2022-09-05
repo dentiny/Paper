@@ -1,0 +1,16 @@
+Current problems:
+1. High-bandwidth links result in performance bottlenecks shifting from protocol
+processing to data copy.
+2. The reducing gap between bandwidth-delay product (BDP) and cache sizes leads
+to suboptimal throughput.
+3. Host resource sharing considered harmful.
+
+Potential improvements:
+1. zero-copy mechanism:
+(1) message send zero-copy: https://lwn.net/Articles/726917/
+(2) message receive zero-copy: https://lwn.net/Articles/752188/
+2. Linux network NAPI:
+(1) interrupt mitigation:
+1/ alternative to purely interrupt-based
+2/ poll on incoming frames until certain number of frames received or deadline
+(2) packet throttling: driver drops packets in network adaptor before processed
