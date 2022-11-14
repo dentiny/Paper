@@ -1,0 +1,52 @@
+components:
+(1) clients: run on user space; maintain own cache, independent of page or
+buffer cache
+(2) OSD(Object Storage Device): communicate directly with clients, manage
+file IO
+(3) MDS(Metadata Server): metadata operation
+(4) monitor(5.4):
+	1/ cluster collects failure reports, and filter out problems
+	2/ provide consistent access to cluster map via election, active peer
+	monitoring, short-term leases and 2PC
+
+How content is stored:
+(1) Object is mapped to PG (Placement Group), logical object pool
+(2) PG is mapped to OSD (Object Storage Daemon), unit of RADOS storage
+- Multiple OSDs share CPU, mem, b/w
+- the unit of replication, migration, recovery
+(3) How OSD is written into storage:
+- data part: directly goes to storage device
+- metadata part: goes through RocksDB, BlueFS, storage device
+
+design feature:
+(1) decouple data and metadata, respectively managed by OSD and MDS
+	1/ distribute workload(GFS: seperate control flow and data flow)
+	2/ delegate low-level block allocation to individual devices
+(2) dynamic distributed metadata management: Dynamic Subtree Partitioning
+(3) reliable autonomic distributed object storage
+	OSD manages data migration, replication, failure detection and failure
+	recovery
+
+implementation details:
+(1) client synchronization: for concurrent multiple writes,
+	1/ revoke caching and buffer capacity, sync dirty data
+	2/ relax consistency level(3.2)
+(2) MDS optimize for common metadata access(3.3)
+(3) file: (ino, ono) -> oid
+	object: hash(oid) & mask -> pgid
+	pg(Placement Group): CRUSH(pgid) -> (osd1, ..., osd n)
+note:
+	1/ CRUSH() is deterministic, thus can be calculated by clients, MDS
+	and OSD; which removes the need to maintain and distribute objects list
+	2/ (osd1, ..., osd n) is ordered, primary and replica is thus decided
+(4) inode embedded within directory at MDS: locality and prefetching(4.1)
+(5) anchor table: optimize for multiple hard link inodes(4.1)
+(6) MDS cluster distributes cached metadata hierarchically across nodes(4.1)
+(7) hot read directory replicated across nodes
+	large directory, or heavy write workload cached across nodes(4.1)
+(8) node content: security, file, immutable, assigned different consistency 
+level(4.2)
+(9) OSD data is written and replicated in sync mode(ack after primary and 
+replicas all ack)(5.2)
+(10) object storage in user-space: self-implemented IO scheduler, cache manage-
+ment, block allocation(5.6)
