@@ -1,0 +1,32 @@
+Problem with previous monitoring system Borgmon:
+1. No support for multi-tenant: each team maintains its own Borgmon instance
+2. Lack of schema and query language
+3. Lack commonly used metrics (i.e. distribution)
+Additional goals:
+1. Trades consistency for high availability
+2. Low dependency on critical path, stores monitoring data in memory
+
+System overview (2 and Fig.1):
+1. Hierarchy: root, zone, leaf
+2. State holders:
+(1) leaf: store monitoring data in mem
+(2) recovery log: store monitoring data on disk
+(3) config server (and zonal mirror): hold config data
+3. Data ingestion:
+(1) ingestion router: route data to leaf routers within zone
+(2) leaf router: route data to leaf for storage
+(3) range assigner: manage assignment for data range
+4. Query execution:
+(1) mixer: includes both root and zone mixer, split and merge queries
+(2) index server: index data for each zone and leaf (i.e. used for predicate
+pushdown)
+(3) evaluator
+
+Several key designs:
+1. Keys stored in key ranges, and rebalanced after hotspot detected
+(1) Usually two ways: store keys in hash value across multiple leaves, but need
+to read all leaves at query potentially
+2. Use push instead of pull to ingest data (9)
+3. Collection aggregation: to save storage space (4.3)
+(1) delta time series
+(2) bucketing and admission window
