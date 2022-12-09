@@ -1,0 +1,13 @@
+Design for Haystack:
+1. Bundle blobs into a volume (reduce IO and metadata overhead)
+2. Index file is kept in memory
+
+motivation for warm storage:
+1. Temporature zone (access pattern) exists
+2. Hot tier and warm tier is differentiated via access latency SLO
+
+storage architecture:
+1. CDN protects storage
+2. router abstracts storage
+3. web tier adds business logic
+4. Haystack for hot storage, F4 for warm storage
