@@ -1,0 +1,13 @@
+database query engine architecture:
+1. parser: convert SQL string into AST, which contains table and column
+2. binder: convert tokenized string into internal indentifier, via catalog
+manager
+3. rewriter: implements basic optmization, like constant folding
+4. optimizer: convert logical plan into physical plan, which is taken as the
+input for query executor
+
+components for query optimizer:
+- search space (a space of plans)
+- cost estimation, so that a cost may be assigned to each plan of resources 
+needed for the execution
+- enumeration algorithm, which can search through the search space
