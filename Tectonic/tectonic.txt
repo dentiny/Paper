@@ -1,0 +1,10 @@
+Motivation:
+- Haystack is for new blobs, bottlenecked on IOPS but has spare disk space
+- F4 is for old blobs, bottlenecked at disk space but has spare IO capacity
+
+Metadata service features:
+1. Layered: splitted to name, file, block, and only expose to outside as "name"
+2. Use ZippyDB (linearizable, sharded, key-value storage) to store metadata
+3. expanded map: avoid update to one value load and update all values
+cascadingly; so use key-value as the whole key to store in DB
+4. shard by hashing
