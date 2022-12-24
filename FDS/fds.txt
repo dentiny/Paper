@@ -1,0 +1,20 @@
+motivation:
+- real world of over-subscription: storage b/w >> network b/w
+- scheduling algorithm prefers moving computation near data, which affects
+efficiency and easier to cause straggler
+- but full bisection enables all compute nodes can access all storage with 
+equal throughput, and no need to worry about data locality
+
+architecture:
+- data is organized in blobs, (GUID, tract ID) uniquely identifies a chunk
+- each disk is managed by tractserver
+- TLT (Tract Locator Table) deterministically maps (GUID, tract ID) to 
+tractserver by hash function: Tract_Locator = (Hash(g) + i) mod TLT_Length
+
+metadata service:
+(1) tractserver liveness detection
+(2) maintain consistency of TLT
+
+dynamic workload allocation:
+- data and compute no longer need to be co-located
+- work can be assigned dynamically during execution and with finer granularity
