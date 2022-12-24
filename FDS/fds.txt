@@ -1,17 +1,38 @@
 motivation:
-- real world of over-subscription: storage b/w >> network b/w
+- real world of over-subscription:
+(1) storage b/w >> network b/w
+(2) in-rack b/w >> cross-rack b/w
 - scheduling algorithm prefers moving computation near data, which affects
-efficiency and easier to cause straggler
+efficiency (insuffient usage of disk storage and easier to cause straggler
+- In a word, locality constraint due to datacenter b/w shortage
 - but full bisection enables all compute nodes can access all storage with 
 equal throughput, and no need to worry about data locality
 
 architecture:
+- FDS turns to a flat storage model, all compute nodes are treated as remote
+- design goal is to expose all disk b/w to applications
 - data is organized in blobs, (GUID, tract ID) uniquely identifies a chunk
 - each disk is managed by tractserver
 - TLT (Tract Locator Table) deterministically maps (GUID, tract ID) to 
 tractserver by hash function: Tract_Locator = (Hash(g) + i) mod TLT_Length
 
-metadata service:
+metadata service overview:
+GFS:
+- centralized
+- critical path for read and write
+- leverage large chunk of data to reduce metadata overhead, but bad for fine
+granularity LB
++ complete state visibility
++ full control over placement
++ one hop to access data
++ fast reaction to failures
+
+DHT:
++ no centralized bottleneck
+- multiple hops to access data
+- slow failure recovery
+
+FDS metadata service:
 (1) tractserver liveness detection
 (2) maintain consistency of TLT
 
