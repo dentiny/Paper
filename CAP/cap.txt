@@ -1,0 +1,16 @@
+Difference for 'C' in ACID and CAP:
+- C in ACID: transaction brings database from one consistent state to another,
+perserving database invariants
+- C in CAP: linearizability, as if there's only one copy
+
+Understanding for CAP:
+- Partition is rare, there's little reason to forfeit C or A when system is not
+partitioned
+- availability is continuous from 0 to 100 percent, therere also many levels of
+consistency
+- a partition is a time bound on communication
+
+How to deal with network partition:
+- detect the start of a partition
+- enter an explicit partition mode that limit some operations
+- initiate partition recovery when communication is restored
