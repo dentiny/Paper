@@ -1,0 +1,16 @@
+Two types of operations:
+- per-byte operation: copy, checksum
+- per-packet operation: header processing, memory management
+
+Motivation:
+As CPU prefetching (move data from memory to cache) increases, overhead switches
+from per-byte operation to per-packet operation
+
+Two methods:
+- receive aggregation: 
+(1) aggregate multiple incoming packets for the same TCP connection into single
+large packet
+- acknowledgement offload:
+(1) instead of generating a sequence of acknowledgement packets, TCP stack
+generates a single TCP acknowledgement packet template
+(2) reduce the number of ack packets to be processed by the TCP transmit side
