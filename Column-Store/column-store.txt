@@ -1,0 +1,34 @@
+Conclusion: column storage format won't bring performance improvement naturally,
+it needs to be combined with query execution.
+
+Several sources of improvement:
+1. compression
+(1) Less time is spent on IO
+(2) If query executor can operate directly on compressed data, no need for 
+decompression
+2. Late materialization
+Note: materialization: aggregate columns into rows which users request for.
+(1) Selection and aggregation operators tend to render the construction of some
+tuples unnecessary.
+(2) If data is compressed using a column-oriented compression method, it must be
+decompressed before the combination of values with values from other columns.
+This removes the advantages of operating directly on compressed data.
+(3) Cache performance is improved when operating directly on column data, since
+a given cache line is not polluted with surrounding irrelevant attributes for a
+given operation.
+(4) Block iteration optimization has a higher impact on performance for fixed
+length attributes. In a row-store, if any attribute in a tuple is variable
+width, then the entire tuple is variable width. In a late materialized
+column-store, fixed-width columns can be operated on separately.
+3. Block iteration
+Operating on data as an array not only minimizes per-tuple overhead, but it also
+exploits potential for parallelism on modern CPUs, as loop-pipelining techniques
+can be used.
+4. Invisible join
+Similar to late materialization, but uses range extraction rather than out-of-order
+query.
+If the dimension table key is a sorted, contiguous list of identifiers starting
+from 1 (which is the common case), then the foreign key actually represents the
+position of the desired tuple in dimension table. This means that the needed 
+dimension table columns can be extracted directly using this position list (and
+this is simply a fast array look-up).
