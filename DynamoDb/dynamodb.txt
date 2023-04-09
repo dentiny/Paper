@@ -1,0 +1,42 @@
+Existing problems:
+- Hot partitions: arise in applications that had traffic going consistently
+towards a few items of their tables.
+- Throughput dilution: common for tables where partitions were split for size.
+Splitting a partition for size would cause the throughput of the partition to be
+divided equally among the newly created child partitions, and hence the per
+partition throughput would decrease.
+
+Several attempted solutions:
+
+1. Basic admission control: perform admission control at partition level.
+- Bursting:
+(1) provide token for bursty workload, treat read and write access
+differently.
+(2) limitation: assume resident node has enough throughput to support burst.
+
+- Adaptive capacity:
+(1) automatically increase (and re-allocate) and decrease the
+allocated throughput for partitions.
+(2) limitation: it's reactive, and only gets triggered after throttling
+observed.
+
+2. Admission control:
+- admission control at global view (table level instead of partition).
+
+3. Balancing consumed capacity:
+(1) the system packs storage nodes with a set of replicas greater than the
+node’s overall provisioned capacity;
+(2) proactively balances the partitions allocated across the storage nodes based
+on throughput consumption and storage to mitigate availability risks caused by
+tightly packed replicas.
+
+4. Splitting for consumption, and on-demand provisioning
+- Once the consumed throughput of a partition crosses a certain threshold, the 
+partition is split for consumption.
+- DynamoDB provisions the on-demand tables based on the consumed capacity by
+collecting the signal of reads and writes and instantly accommodates up to double
+the previous peak traffic on the table.
+- There are still class of workloads that cannot benefit from split for
+consumption. For example, a partition receiving high traffic to a single item or
+a partition where the key range is accessed sequentially will not benefit from
+split.
