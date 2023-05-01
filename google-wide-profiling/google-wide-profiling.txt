@@ -1,0 +1,16 @@
+GWP collects two categories of profiles: whole-machine and per-process.
+
+Whole machine profiles capture all activities happening on the machine,
+including user applications, the kernel, kernel modules, daemons, and other
+background jobs. The whole machine profiles include hardware performance
+monitoring (HPM) event profiles, kernel event traces, and power measurements.
+
+The most commonly used generic events are CPU cycles, retired instructions,
+L1 and L2 cache misses, and branch mispredictions.
+
+Most applications include a common library that enables process-wide
+stacktrace-attributed profiling mechanisms for heap allocation, lock contention,
+wall time and CPU time, and other performance metrics.
+
+Symbolization: An alternative is to persistently store binaries that contain
+debug information before they’re stripped.
