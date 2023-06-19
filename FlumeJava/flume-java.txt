@@ -1,0 +1,27 @@
+Core Abstractions:
+- PCollection<T>: a immutable bag of elements of type T
+- PTable<K,V>, an immutable multi-map with keys of type K and values of type V
+
+Core primitives:
+- parallelDo(): which supports elementwise computation over an input
+PCollection<T> to produce a new output PCollection<S>
+- groupByKey(): converts a multi-map of type PTable<K,V> (which can have many
+key/value pairs with the same key) into a uni-map of type PTable<K, Collection<V>>
+where each key maps to an unordered, plain Java Collection of all the values
+with that key
+- combineValues(): takes an input PTable<K, Collection<V>> and an associative
+combining function on Vs, and returns a PTable<K, V> where each input collection
+of values has been combined into a single output value
+- flatten(): takes a list of PCollection<T>s and returns a single PCollection<T>
+that contains all the elements of the input PCollections. flatten() does not
+actually copy the inputs, but rather creates a view of them as one logical
+PCollection
+
+Derived operations:
+- count(): takes a PCollection<T> and returns a PTable<T, Integer> mapping each
+distinct element of the input PCollection to the number of times it occurs
+- join(): implements a kind of join over two or more PTables sharing a common
+key type
+- top(): which takes a comparison function and a count N and returns the
+greatest N elements of its receiver PCollection according to the comparison
+function
