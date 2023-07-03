@@ -1,0 +1,52 @@
+Pros:
+- Simple and easy to use
+	The MapReduce model is simple but expressive. With MapReduce, a programmer
+	defines his job with only Map and Reduce functions, without having to
+	specify physical distribution of his job across nodes.
+- Flexible
+	MapReduce does not have any dependency on data model and schema. With
+	MapReduce a programmer can deal with irregular or unstructured data more
+	easily than they do with DBMS.
+- Independent of the storage
+	MapReduce is basically independent from underlying storage layers. Thus,
+	MapReduce can work with different storage layers such as BigTable and others
+- Fault tolerance
+	MapReduce is highly fault-tolerant. For example, it is reported that
+	MapReduce can continue to work in spite of an average of 1.2 failures per
+	analysis job at Google.
+- High scalability
+	The best advantage of using MapReduce is high scalability. Yahoo! reported
+	that their Hadoop gear could scale out more than 4,000 nodes in 2008.
+
+Cons:
+- No high-level language
+	MapReduce itself does not support any high-level language like SQL in DBMS
+	and any query optimization technique. Users should code their operations in
+	Map and Reduce functions
+- No schema and no index
+	MapReduce is schema-free and index-free. An MR job can work right after its
+	input is loaded into its storage. However, this impromptu processing throws
+	away the benefits of data modeling. MapReduce requires to parse each item at
+	reading input and transform it into data objects for data processing,
+	causing performance degradation.
+- A Single fixed dataflow
+	MapReduce provides the ease of use with a simple abstraction, but in a fixed
+	dataflow. Therefore, many complex algorithms are hard to implement with Map
+	and Reduce only in an MR job. In addition, some algorithms that require
+	multiple inputs are not well supported since the dataflow of MapReduce is
+	originally designed to read a single input and generate a single output.
+- Low efficiency
+	With fault-tolerance and scalability as its primary goals, MapReduce
+	operations are not always optimized for I/O efficiency. (Consider for
+	example sort-merge based grouping, materialization of intermediate results
+	and data triplication on the distributed file system.) In addition, Map
+	and Reduce are blocking operations. A transition to the next stage cannot be
+	made until all the tasks of the current stage are finished. Consequently,
+	pipeline parallelism may not be exploited. Moreover, block-level restarts, a
+	one-to-one shuffling strategy, and a simple runtime scheduling can also
+	lower the efficiency per node. MapReduce does not have specific execution
+	plans and does not optimize plans like DBMS does to minimize data transfer
+	across nodes. Therefore, MapReduce often shows poorer performance than DBMS.
+	In addition, the MapReduce framework has a latency problem that comes from
+	its inherent batch processing nature. All of inputs for an MR job should
+	be prepared in advance for processing.
